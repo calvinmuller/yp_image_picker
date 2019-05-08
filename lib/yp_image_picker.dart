@@ -11,12 +11,16 @@ import 'src/metadata.dart';
 class YpImagePicker {
   static const MethodChannel _channel = const MethodChannel('yp_image_picker');
 
+  static void finish() async {
+    await _channel.invokeMethod('finish');
+  }
+
   static Future<dynamic> pickImage({
     @required int maxImages,
     int width = 800,
     int height = 600,
     bool videos = false,
-    double quality = 0.9,
+    double quality = 0.5,
   }) async {
     assert(maxImages != null);
 

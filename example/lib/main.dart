@@ -31,40 +31,70 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Stack(
-            children: <Widget>[
-              _previewPhoto(),
-              _previewVideo(_controller),
-              FlatButton(
-                onPressed: () async {
-                  final result = await YpImagePicker.pickImage(
-                    maxImages: 4,
-                    quality: 0.5,
-                    width: 1024,
-                    height: 1024,
-                    videos: false,
-                  );
+        body: Stack(
+          children: <Widget>[
+            _previewPhoto(),
+            _previewVideo(_controller),
+            Column(
+              children: <Widget>[
+                FlatButton(
+                  onPressed: () async {
+                    final result = await YpImagePicker.pickImage(
+                      maxImages: 4,
+                      quality: 0.5,
+                      width: 1024,
+                      height: 1024,
+                      videos: false,
+                    );
 
-                  // video
-                  if (result is String) {
-                    File file = File(result);
-                    _controller = VideoPlayerController.file(file)
-                      ..addListener(_onVideoControllerUpdate)
-                      ..setVolume(1.0)
-                      ..initialize()
-                      ..setLooping(true)
-                      ..play();
-                  } else if (result is List) {
-                    setState(() {
-                      _images = result;
-                    });
-                  }
-                },
-                child: Text("Image Picker"),
-              ),
-            ],
-          ),
+                    // video
+                    if (result is String) {
+                      File file = File(result);
+                      _controller = VideoPlayerController.file(file)
+                        ..addListener(_onVideoControllerUpdate)
+                        ..setVolume(1.0)
+                        ..initialize()
+                        ..setLooping(true)
+                        ..play();
+                    } else if (result is List) {
+                      setState(() {
+                        _images = result;
+                      });
+                    }
+                  },
+                  child: Text("Image Picker"),
+                ),
+                FlatButton(
+                  onPressed: () async {
+                    final result = await YpImagePicker.pickImage(
+                      maxImages: 4,
+                      quality: 0.5,
+                      width: 1024,
+                      height: 1024,
+                      videos: true,
+                    );
+
+                    // video
+                    if (result is String) {
+                      File file = File(result);
+                      _controller = VideoPlayerController.file(file)
+                        ..addListener(_onVideoControllerUpdate)
+                        ..setVolume(1.0)
+                        ..initialize()
+                        ..setLooping(true)
+                        ..play();
+                    } else if (result is List) {
+                      setState(() {
+                        _images = result;
+                      });
+                    }
+                    YpImagePicker.finish();
+                  },
+                  child: Text("Pick and dispose"),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
