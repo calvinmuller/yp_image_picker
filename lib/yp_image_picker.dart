@@ -21,6 +21,7 @@ class YpImagePicker {
     int height = 600,
     bool videos = false,
     double quality = 0.5,
+    bool onlySquare = false,
   }) async {
     assert(maxImages != null);
 
@@ -31,6 +32,7 @@ class YpImagePicker {
     final dynamic items = await _channel.invokeMethod(
       'getImages',
       <String, dynamic>{
+        "onlySquare": onlySquare,
         "maxImages": maxImages,
         "width": width,
         "height": height,
