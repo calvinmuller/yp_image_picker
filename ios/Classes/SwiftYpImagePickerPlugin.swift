@@ -25,7 +25,6 @@ public class SwiftYpImagePickerPlugin: NSObject, FlutterPlugin {
         self.config.startOnScreen = .library
         self.config.library.mediaType = .photo
         self.config.shouldSaveNewPicturesToAlbum = false
-        self.config.library.onlySquare = true
         self.picker = YPImagePicker(configuration: self.config)
         self.controller = cont;
         self.messenger = messenger;
@@ -45,11 +44,13 @@ public class SwiftYpImagePickerPlugin: NSObject, FlutterPlugin {
             let width = arguments["width"] as! Int
             let quality = arguments["quality"] as! CGFloat
             let videos = arguments["videos"] as? Bool ?? false
+            let onlySquare = arguments["onlySquare"] as? Bool ?? false
             
             if (videos) {
                 self.config.screens.append(.video)
                 self.config.library.mediaType = .photoAndVideo
             }
+            self.config.library.onlySquare = onlySquare
             self.config.library.maxNumberOfItems = maxImages
             self.config.targetImageSize = YPImageSize.cappedTo(size: CGFloat(width))
             YPImagePickerConfiguration.shared = self.config
