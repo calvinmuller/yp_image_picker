@@ -626,6 +626,7 @@ public class YpImagePickerPlugin implements
         ArrayList<Uri> selectedUris = new ArrayList<Uri>();
 
         int color = Color.parseColor(this.methodCall.argument("colour").toString());
+        int text = Color.parseColor(this.methodCall.argument("text").toString());
 
         for (String path : selectedAssets) {
             selectedUris.add(Uri.parse(path));
@@ -640,6 +641,7 @@ public class YpImagePickerPlugin implements
                 .exceptGif(true)
                 .setReachLimitAutomaticClose(true)
                 .setActionBarColor(color)
+                .setActionBarTitleColor(text)
                 .setIsUseDetailView(false)
                 .isStartInAllView(false);
 
