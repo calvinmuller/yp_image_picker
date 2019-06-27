@@ -106,11 +106,10 @@ public class YpImagePickerPlugin implements
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED
                     && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
                 int maxImages = (int) this.methodCall.argument(MAX_IMAGES);
-                boolean enableCamera = (boolean) this.methodCall.argument(ENABLE_CAMERA);
                 HashMap<String, String> options = this.methodCall.argument(ANDROID_OPTIONS);
                 ArrayList<String> selectedAssets = this.methodCall.argument(SELECTED_ASSETS);
                 assert options != null;
-                presentPicker(maxImages, enableCamera, selectedAssets, options);
+                presentPicker(maxImages, true, selectedAssets, options);
             } else {
                 if (
                         ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_EXTERNAL_STORAGE) ||
@@ -600,9 +599,8 @@ public class YpImagePickerPlugin implements
 
         } else {
             int maxImages = (int) this.methodCall.argument(MAX_IMAGES);
-            boolean enableCamera = (boolean) true;
             ArrayList<String> selectedAssets = this.methodCall.argument(SELECTED_ASSETS);
-            presentPicker(maxImages, enableCamera, selectedAssets, options);
+            presentPicker(maxImages, true, selectedAssets, options);
         }
 
     }
