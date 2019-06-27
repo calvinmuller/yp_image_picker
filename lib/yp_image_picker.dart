@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
@@ -15,31 +14,32 @@ class YpImagePicker {
     await _channel.invokeMethod('finish');
   }
 
-  static Future<dynamic> pickImage({
-    @required int maxImages,
-    int width = 800,
-    int height = 600,
-    bool videos = false,
-    double quality = 0.5,
-    bool onlySquare = false,
-  }) async {
+  static Future<dynamic> pickImage(
+      {@required int maxImages,
+      int width = 800,
+      int height = 600,
+      bool videos = false,
+      double quality = 0.5,
+      bool onlySquare = false,
+      String colour = "#FF9900"}) async {
     assert(maxImages != null);
 
     if (maxImages != null && maxImages < 0) {
       throw new ArgumentError.value(maxImages, 'maxImages cannot be negative');
     }
 
-    final dynamic items = await _channel.invokeMethod(
-      'getImages',
-      <String, dynamic>{
-        "onlySquare": onlySquare,
-        "maxImages": maxImages,
-        "width": width,
-        "height": height,
-        "quality": quality,
-        "videos": videos
-      },
-    );
+    final dynamic items =
+        await _channel.invokeMethod('getImages', <String, dynamic>{
+      "onlySquare": onlySquare,
+      "maxImages": maxImages,
+      "width": width,
+      "height": height,
+      "quality": quality,
+      "videos": videos,
+      "androidOptions": {},
+      "selectedAssets": [],
+      "colour": colour
+    });
 
     return items;
   }
