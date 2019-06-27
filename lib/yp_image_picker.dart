@@ -14,14 +14,16 @@ class YpImagePicker {
     await _channel.invokeMethod('finish');
   }
 
-  static Future<dynamic> pickImage(
-      {@required int maxImages,
-      int width = 800,
-      int height = 600,
-      bool videos = false,
-      double quality = 0.5,
-      bool onlySquare = false,
-      String colour = "#FF9900"}) async {
+  static Future<dynamic> pickImage({
+    @required int maxImages,
+    int width = 800,
+    int height = 600,
+    bool videos = false,
+    double quality = 0.5,
+    bool onlySquare = false,
+    String colour = "#FF9900",
+    String text = "#FFFFFF",
+  }) async {
     assert(maxImages != null);
 
     if (maxImages != null && maxImages < 0) {
@@ -38,7 +40,8 @@ class YpImagePicker {
       "videos": videos,
       "androidOptions": {},
       "selectedAssets": [],
-      "colour": colour
+      "colour": colour,
+      "text": text,
     });
 
     return items;
