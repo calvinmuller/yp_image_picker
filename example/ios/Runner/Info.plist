@@ -19,17 +19,17 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<string>95</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>NSCameraUsageDescription</key>
-    <string>yourWording</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>yourWording</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>yourWording</string>
+	<string>yourWording</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>yourWording</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>yourWording</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>

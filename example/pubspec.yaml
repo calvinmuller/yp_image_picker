@@ -1,6 +1,7 @@
 name: yp_image_picker_example
 description: Demonstrates how to use the yp_image_picker plugin.
 publish_to: 'none'
+version: 1.0.0+91
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
