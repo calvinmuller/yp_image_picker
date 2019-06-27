@@ -627,6 +627,7 @@ public class YpImagePickerPlugin implements
 
         int color = Color.parseColor(this.methodCall.argument("colour").toString());
         int text = Color.parseColor(this.methodCall.argument("text").toString());
+        boolean closeOnLimitReached = (boolean) this.methodCall.argument("closeOnLimitReached");
 
         for (String path : selectedAssets) {
             selectedUris.add(Uri.parse(path));
@@ -639,7 +640,7 @@ public class YpImagePickerPlugin implements
                 .setRequestCode(REQUEST_CODE_CHOOSE)
                 .setSelectedImages(selectedUris)
                 .exceptGif(true)
-                .setReachLimitAutomaticClose(true)
+                .setReachLimitAutomaticClose(closeOnLimitReached)
                 .setActionBarColor(color)
                 .setActionBarTitleColor(text)
                 .setIsUseDetailView(false)

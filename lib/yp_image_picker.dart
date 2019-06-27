@@ -23,6 +23,7 @@ class YpImagePicker {
     bool onlySquare = false,
     String colour = "#FF9900",
     String text = "#FFFFFF",
+    bool closeOnLimitReached = false,
   }) async {
     assert(maxImages != null);
 
@@ -42,6 +43,7 @@ class YpImagePicker {
       "selectedAssets": [],
       "colour": colour,
       "text": text,
+      "closeOnLimitReached": closeOnLimitReached,
     });
 
     return items;
