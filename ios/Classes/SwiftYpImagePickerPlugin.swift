@@ -54,7 +54,7 @@ public class SwiftYpImagePickerPlugin: NSObject, FlutterPlugin {
             self.config.library.maxNumberOfItems = maxImages
             self.config.targetImageSize = YPImageSize.cappedTo(size: CGFloat(width))
             YPImagePickerConfiguration.shared = self.config
-            
+            self.picker = YPImagePicker()
             self.picker.didFinishPicking { [unowned picker] items, _ in
                 for item in items {
                     switch item {
