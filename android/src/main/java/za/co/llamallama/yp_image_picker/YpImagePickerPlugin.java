@@ -491,6 +491,7 @@ public class YpImagePickerPlugin implements
 
         boolean closeOnLimitReached = (boolean) this.methodCall.argument("closeOnLimitReached");
         boolean isUseDetailView = (boolean) this.methodCall.argument("isUseDetailView");
+        boolean isStartInAllView = (boolean) this.methodCall.argument("isStartInAllView");
 
         for (String path : selectedAssets) {
             selectedUris.add(Uri.parse(path));
@@ -520,7 +521,7 @@ public class YpImagePickerPlugin implements
                                 (!isDark) ? R.drawable.is_check_white: R.drawable.is_check_black
                         )
                 )
-                .isStartInAllView(false);
+                .isStartInAllView(isStartInAllView);
 
         fishBun.startAlbum();
 
