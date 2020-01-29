@@ -26,6 +26,7 @@ class YpImagePicker {
     String colour = "#FF9900",
     String text = "#FFFFFF",
     bool closeOnLimitReached = false,
+    bool isUseDetailView = false,
   }) async {
     assert(maxImages != null);
 
@@ -42,6 +43,7 @@ class YpImagePicker {
       "quality": quality,
       "videos": videos,
       "enableCamera": true,
+      "isUseDetailView": isUseDetailView,
       "isDark": isDark,
       "androidOptions": {},
       "selectedAssets": [],

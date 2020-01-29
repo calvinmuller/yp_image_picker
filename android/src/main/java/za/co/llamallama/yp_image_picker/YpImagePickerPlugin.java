@@ -490,6 +490,7 @@ public class YpImagePickerPlugin implements
 
 
         boolean closeOnLimitReached = (boolean) this.methodCall.argument("closeOnLimitReached");
+        boolean isUseDetailView = (boolean) this.methodCall.argument("isUseDetailView");
 
         for (String path : selectedAssets) {
             selectedUris.add(Uri.parse(path));
@@ -503,9 +504,9 @@ public class YpImagePickerPlugin implements
                 .setSelectedImages(selectedUris)
                 .exceptGif(true)
                 .setReachLimitAutomaticClose(closeOnLimitReached)
-                .setActionBarColor(color)
+                .setActionBarColor(color, color)
                 .setActionBarTitleColor(text)
-                .setIsUseDetailView(false)
+                .setIsUseDetailView(isUseDetailView)
                 .setButtonInAlbumActivity(true)
                 .setHomeAsUpIndicatorDrawable(
                         ContextCompat.getDrawable(
