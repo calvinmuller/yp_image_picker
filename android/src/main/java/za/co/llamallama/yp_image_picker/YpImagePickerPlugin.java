@@ -482,8 +482,13 @@ public class YpImagePickerPlugin implements
     private void presentPicker(int maxImages, boolean enableCamera, ArrayList<String> selectedAssets, HashMap<String, String> options) {
         ArrayList<Uri> selectedUris = new ArrayList<Uri>();
 
+
         int color = Color.parseColor(this.methodCall.argument("colour").toString());
         int text = Color.parseColor(this.methodCall.argument("text").toString());
+
+        boolean isDark = (boolean) this.methodCall.argument("isDark");
+
+
         boolean closeOnLimitReached = (boolean) this.methodCall.argument("closeOnLimitReached");
 
         for (String path : selectedAssets) {
@@ -501,6 +506,19 @@ public class YpImagePickerPlugin implements
                 .setActionBarColor(color)
                 .setActionBarTitleColor(text)
                 .setIsUseDetailView(false)
+                .setButtonInAlbumActivity(true)
+                .setHomeAsUpIndicatorDrawable(
+                        ContextCompat.getDrawable(
+                                this.context,
+                                (!isDark) ? R.drawable.ic_custom_back_white: R.drawable.ic_custom_back_black
+                        )
+                )
+                .setDoneButtonDrawable(
+                        ContextCompat.getDrawable(
+                                this.context,
+                                (!isDark) ? R.drawable.is_check_white: R.drawable.is_check_black
+                        )
+                )
                 .isStartInAllView(false);
 
         fishBun.startAlbum();

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 import 'package:yp_image_picker/src/image_asset.dart';
 
@@ -21,6 +22,7 @@ class YpImagePicker {
     bool videos = false,
     double quality = 0.5,
     bool onlySquare = false,
+    bool isDark = false,
     String colour = "#FF9900",
     String text = "#FFFFFF",
     bool closeOnLimitReached = false,
@@ -40,6 +42,7 @@ class YpImagePicker {
       "quality": quality,
       "videos": videos,
       "enableCamera": true,
+      "isDark": isDark,
       "androidOptions": {},
       "selectedAssets": [],
       "colour": colour,
