@@ -1,6 +1,5 @@
 package za.co.llamallama.yp_image_picker;
 
-
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
