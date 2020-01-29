@@ -2,18 +2,14 @@ package za.co.llamallama.yp_image_picker;
 
 
 import android.app.Activity;
-import android.content.ContentProviderOperation;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.media.MediaScannerConnection;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 
@@ -23,7 +19,6 @@ import com.sangcomz.fishbun.adapter.image.impl.GlideAdapter;
 import com.sangcomz.fishbun.define.Define;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Math;
@@ -43,14 +38,12 @@ import android.Manifest;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.OpenableColumns;
-import android.os.Environment;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import android.text.TextUtils;
 
 import io.flutter.plugin.common.BinaryMessenger;
@@ -62,29 +55,24 @@ import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 import static android.media.ThumbnailUtils.OPTIONS_RECYCLE_INPUT;
-import static za.co.llamallama.yp_image_picker.FileDirectory.getPath;
 
 /**
  * YpImagePickerPlugin
  */
 public class YpImagePickerPlugin implements
         MethodCallHandler,
-        PluginRegistry.ActivityResultListener,
-        PluginRegistry.RequestPermissionsResultListener {
+        PluginRegistry.ActivityResultListener {
 
     private static final String CHANNEL_NAME = "yp_image_picker";
     private static final String REQUEST_THUMBNAIL = "requestThumbnail";
     private static final String REQUEST_ORIGINAL = "requestOriginal";
     private static final String REQUEST_METADATA = "requestMetadata";
     private static final String PICK_IMAGES = "getImages";
-    private static final String DELETE_IMAGES = "deleteImages";
-    private static final String REFRESH_IMAGE = "refreshImage";
     private static final String MAX_IMAGES = "maxImages";
     private static final String SELECTED_ASSETS = "selectedAssets";
     private static final String ENABLE_CAMERA = "enableCamera";
     private static final String ANDROID_OPTIONS = "androidOptions";
     private static final int REQUEST_CODE_CHOOSE = 1001;
-    private static final int REQUEST_CODE_GRANT_PERMISSIONS = 2001;
     private final MethodChannel channel;
     private final Activity activity;
     private final Context context;
@@ -99,35 +87,6 @@ public class YpImagePickerPlugin implements
         this.messenger = messenger;
     }
 
-    @Override
-    public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == REQUEST_CODE_GRANT_PERMISSIONS && permissions.length == 3) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[1] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                int maxImages = (int) this.methodCall.argument(MAX_IMAGES);
-                HashMap<String, String> options = this.methodCall.argument(ANDROID_OPTIONS);
-                ArrayList<String> selectedAssets = this.methodCall.argument(SELECTED_ASSETS);
-                assert options != null;
-                presentPicker(maxImages, true, selectedAssets, options);
-            } else {
-                if (
-                        ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_EXTERNAL_STORAGE) ||
-                                ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
-                                ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.CAMERA)) {
-                    finishWithError("PERMISSION_DENIED", "Read, write or camera permission was not granted");
-                } else {
-                    finishWithError("PERMISSION_PERMANENTLY_DENIED", "Please enable access to the storage and the camera.");
-                }
-                return false;
-            }
-
-            return true;
-        }
-        finishWithError("PERMISSION_DENIED", "Read, write or camera permission was not granted");
-        return false;
-    }
-
     /**
      * Plugin registration.
      */
@@ -135,7 +94,6 @@ public class YpImagePickerPlugin implements
         final MethodChannel channel = new MethodChannel(registrar.messenger(), CHANNEL_NAME);
         YpImagePickerPlugin instance = new YpImagePickerPlugin(registrar.activity(), registrar.context(), channel, registrar.messenger());
         registrar.addActivityResultListener(instance);
-        registrar.addRequestPermissionsResultListener(instance);
         channel.setMethodCallHandler(instance);
 
     }
@@ -202,66 +160,6 @@ public class YpImagePickerPlugin implements
         }
     }
 
-    private static void deleteMedia(Context context, ArrayList<File> files) {
-        // Query for the ID of the media matching the file path
-        Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        ContentResolver contentResolver = context.getContentResolver();
-
-        ArrayList<ContentProviderOperation> operationList = new ArrayList<>();
-        ContentProviderOperation contentProviderOperation;
-
-        for (File file : files) {
-            // Match on the file path
-            contentProviderOperation = ContentProviderOperation.newDelete(queryUri)
-                    .withSelection(MediaStore.Images.Media.DATA + " =? ", new String[]{file.getAbsolutePath()}).build();
-            operationList.add(contentProviderOperation);
-        }
-
-        try {
-            contentResolver.applyBatch(MediaStore.AUTHORITY, operationList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private static class DeleteImageTask extends AsyncTask<String, Void, Void> {
-        private final WeakReference<Activity> activityReference;
-
-        final ArrayList<String> identifiers;
-
-        DeleteImageTask(Activity context, ArrayList<String> identifiers) {
-            super();
-            this.identifiers = identifiers;
-            this.activityReference = new WeakReference<>(context);
-        }
-
-        @Override
-        protected Void doInBackground(String... strings) {
-            ArrayList<File> files = new ArrayList<>();
-
-            try {
-                // get a reference to the activity if it is still there
-                Activity activity = activityReference.get();
-                if (activity == null || activity.isFinishing()) return null;
-                for (String identifier : this.identifiers) {
-                    final Uri uri = Uri.parse(identifier);
-                    String path = getPath(activity, uri);
-                    File file = new File(path);
-                    if (file.exists()) {
-                        files.add(file);
-                    }
-                }
-
-                deleteMedia(activity, files);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-    }
-
     private static class GetImageTask extends AsyncTask<String, Void, ByteBuffer> {
         private final WeakReference<Activity> activityReference;
 
@@ -324,31 +222,44 @@ public class YpImagePickerPlugin implements
 
         if (PICK_IMAGES.equals(call.method)) {
             final HashMap<String, String> options = call.argument(ANDROID_OPTIONS);
-            openImagePicker(options);
-        } else if (DELETE_IMAGES.equals(call.method)) {
-            final ArrayList<String> identifiers = call.argument("identifiers");
-            DeleteImageTask task = new DeleteImageTask(this.activity, identifiers);
-            task.execute();
-            finishWithSuccess();
+            int maxImages = (int) call.argument(MAX_IMAGES);
+            boolean enableCamera = (boolean) call.argument(ENABLE_CAMERA);
+            ArrayList<String> selectedAssets = call.argument(SELECTED_ASSETS);
+            presentPicker(maxImages, enableCamera, selectedAssets, options);
         } else if (REQUEST_ORIGINAL.equals(call.method)) {
             final String identifier = call.argument("identifier");
             final int quality = (int) call.argument("quality");
-            GetImageTask task = new GetImageTask(this.activity, this.messenger, identifier, quality);
-            task.execute();
-            finishWithSuccess();
 
+            if (!this.uriExists(identifier)) {
+                finishWithError("ASSET_DOES_NOT_EXIST", "The requested image does not exist.");
+            } else {
+                GetImageTask task = new GetImageTask(this.activity, this.messenger, identifier, quality);
+                task.execute();
+                finishWithSuccess();
+            }
         } else if (REQUEST_THUMBNAIL.equals(call.method)) {
             final String identifier = call.argument("identifier");
             final int width = (int) call.argument("width");
             final int height = (int) call.argument("height");
             final int quality = (int) call.argument("quality");
-            GetThumbnailTask task = new GetThumbnailTask(this.activity, this.messenger, identifier, width, height, quality);
-            task.execute();
-            finishWithSuccess();
+
+            if (!this.uriExists(identifier)) {
+                finishWithError("ASSET_DOES_NOT_EXIST", "The requested image does not exist.");
+            } else {
+                GetThumbnailTask task = new GetThumbnailTask(this.activity, this.messenger, identifier, width, height, quality);
+                task.execute();
+                finishWithSuccess();
+            }
         } else if (REQUEST_METADATA.equals(call.method)) {
             final String identifier = call.argument("identifier");
 
-            final Uri uri = Uri.parse(identifier);
+            Uri uri = Uri.parse(identifier);
+
+            // Scoped storage related code. We can only get gps location if we ask for original image
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                uri = MediaStore.setRequireOriginal(uri);
+            }
+
             try (InputStream in = context.getContentResolver().openInputStream(uri)) {
                 assert in != null;
                 ExifInterface exifInterface = new ExifInterface(in);
@@ -358,9 +269,6 @@ public class YpImagePickerPlugin implements
                 finishWithError("Exif error", e.toString());
             }
 
-        } else if (REFRESH_IMAGE.equals(call.method)) {
-            String path = call.argument("path");
-            refreshGallery(path);
         } else {
             pendingResult.notImplemented();
             clearMethodCallAndResult();
@@ -372,6 +280,8 @@ public class YpImagePickerPlugin implements
 
         // API LEVEL 24
         String[] tags_str = {
+                ExifInterface.TAG_DATETIME,
+                ExifInterface.TAG_GPS_DATESTAMP,
                 ExifInterface.TAG_GPS_LATITUDE_REF,
                 ExifInterface.TAG_GPS_LONGITUDE_REF,
                 ExifInterface.TAG_GPS_PROCESSING_METHOD,
@@ -400,14 +310,17 @@ public class YpImagePickerPlugin implements
         HashMap<String, Object> exif_double = getExif_double(exifInterface, tags_double);
         result.putAll(exif_double);
 
-        // A Temp fix while location data is not returned from the exifInterface due to the errors:
-        //
+        // A Temp fix while location data is not returned from the exifInterface due to the errors. It also
+        // covers Android >= 10 not loading GPS information from getExif_double
         if (exif_double.isEmpty()
                 || !exif_double.containsKey(ExifInterface.TAG_GPS_LATITUDE)
                 || !exif_double.containsKey(ExifInterface.TAG_GPS_LONGITUDE)) {
 
             if (uri != null) {
-                HashMap<String, Object> hotfix_map = getLatLng(uri);
+                HashMap<String, Object> hotfix_map = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                        ? getLatLng(uri)
+                        : getLatLng(exifInterface, uri);
+
                 result.putAll(hotfix_map);
             }
         }
@@ -533,18 +446,10 @@ public class YpImagePickerPlugin implements
             result.putAll(exif24_double);
         }
 
-
-        String TAG_DATETIME = exifInterface.getAttribute(ExifInterface.TAG_DATETIME);
-        String TAG_GPS_TIMESTAMP = exifInterface.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP);
-        long dateTime = formatTime(TAG_DATETIME, "yy:mm:dd hh:mm:ss");
-        long gpsDateTime = formatTime(TAG_GPS_TIMESTAMP, "hh:mm:ss");
-        if (dateTime != 0) result.put(ExifInterface.TAG_DATETIME, dateTime);
-        if (gpsDateTime != 0) result.put(ExifInterface.TAG_GPS_TIMESTAMP, TAG_GPS_TIMESTAMP);
-
         return result;
     }
 
-    private HashMap<String, Object> getExif_str(ExifInterface exifInterface, String[] tags) {
+    private HashMap<String, Object> getExif_str(ExifInterface exifInterface, String[] tags){
         HashMap<String, Object> result = new HashMap<>();
         for (String tag : tags) {
             String attribute = exifInterface.getAttribute(tag);
@@ -555,7 +460,7 @@ public class YpImagePickerPlugin implements
         return result;
     }
 
-    private HashMap<String, Object> getExif_double(ExifInterface exifInterface, String[] tags) {
+    private HashMap<String, Object> getExif_double(ExifInterface exifInterface, String[] tags){
         HashMap<String, Object> result = new HashMap<>();
         for (String tag : tags) {
             double attribute = exifInterface.getAttributeDouble(tag, 0.0);
@@ -566,60 +471,12 @@ public class YpImagePickerPlugin implements
         return result;
     }
 
-    private long formatTime(String date_str, String format_str) {
+    private boolean uriExists(String identifier) {
+        Uri uri = Uri.parse(identifier);
 
-        if (date_str == null) return 0;
-        try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format_str, Locale.US);
-            Date parse = null;
-            parse = simpleDateFormat.parse(date_str);
-            return parse.getTime();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
+        String fileName = this.getFileName(uri);
 
-    private void openImagePicker(HashMap<String, String> options) {
-
-        if (ContextCompat.checkSelfPermission(this.activity,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this.activity,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this.activity,
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this.activity,
-                    new String[]{
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.CAMERA
-                    },
-                    REQUEST_CODE_GRANT_PERMISSIONS);
-
-        } else {
-            int maxImages = (int) this.methodCall.argument(MAX_IMAGES);
-            ArrayList<String> selectedAssets = this.methodCall.argument(SELECTED_ASSETS);
-            presentPicker(maxImages, true, selectedAssets, options);
-        }
-
-    }
-
-    private void refreshGallery(String path) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                MediaScannerConnection.scanFile(context, new String[]{path}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                    public void onScanCompleted(String path, Uri uri) {
-                        finishWithSuccess();
-                    }
-                });
-            } else {
-                context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
-                finishWithSuccess();
-            }
-        } catch (Exception e) {
-            finishWithError("unknown error", e.toString());
-        }
+        return (fileName != null);
     }
 
     private void presentPicker(int maxImages, boolean enableCamera, ArrayList<String> selectedAssets, HashMap<String, String> options) {
@@ -670,7 +527,9 @@ public class YpImagePickerPlugin implements
 
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_CHOOSE && resultCode == Activity.RESULT_OK) {
+        if (requestCode == REQUEST_CODE_CHOOSE && resultCode == Activity.RESULT_CANCELED) {
+            finishWithError("CANCELLED", "The user has cancelled the selection");
+        } else if (requestCode == REQUEST_CODE_CHOOSE && resultCode == Activity.RESULT_OK) {
             List<Uri> photos = data.getParcelableArrayListExtra(Define.INTENT_PATH);
             List<byte[]> result = new ArrayList<>(photos.size());
             for (Uri uri : photos) {
@@ -681,19 +540,21 @@ public class YpImagePickerPlugin implements
             }
             finishWithSuccess(result);
             return true;
-        } else if (requestCode == REQUEST_CODE_GRANT_PERMISSIONS && resultCode == Activity.RESULT_OK) {
-            int maxImages = (int) this.methodCall.argument(MAX_IMAGES);
-            boolean enableCamera = (boolean) this.methodCall.argument(ENABLE_CAMERA);
-            HashMap<String, String> options = this.methodCall.argument(ANDROID_OPTIONS);
-            ArrayList<String> selectedAssets = this.methodCall.argument(SELECTED_ASSETS);
-            assert options != null;
-            presentPicker(maxImages, enableCamera, selectedAssets, options);
-            return true;
         } else {
             finishWithSuccess(Collections.emptyList());
             clearMethodCallAndResult();
         }
         return false;
+    }
+
+    private HashMap<String, Object> getLatLng(ExifInterface exifInterface, @NonNull Uri uri) {
+        HashMap<String, Object> result = new HashMap<>();
+        double[] latLong = exifInterface.getLatLong();
+        if (latLong != null && latLong.length == 2) {
+            result.put(ExifInterface.TAG_GPS_LATITUDE, Math.abs(latLong[0]));
+            result.put(ExifInterface.TAG_GPS_LONGITUDE, Math.abs(latLong[1]));
+        }
+        return result;
     }
 
     private HashMap<String, Object> getLatLng(@NonNull Uri uri) {
@@ -745,6 +606,28 @@ public class YpImagePickerPlugin implements
             }
         }
 
+        return result;
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
         return result;
     }
 

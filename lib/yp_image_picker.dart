@@ -39,6 +39,7 @@ class YpImagePicker {
       "height": height,
       "quality": quality,
       "videos": videos,
+      "enableCamera": true,
       "androidOptions": {},
       "selectedAssets": [],
       "colour": colour,
